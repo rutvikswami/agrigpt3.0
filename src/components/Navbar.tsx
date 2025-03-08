@@ -15,8 +15,9 @@ export function Navbar() {
           
           <div className="flex items-center space-x-8">
             <Link to="/" className="text-gray-700 hover:text-green-600">Home</Link>
-            <Link to="/farming-types" className="text-gray-700 hover:text-green-600">Farming Types</Link>
             <Link to="/about" className="text-gray-700 hover:text-green-600">About</Link>
+            <Link to="/farming-types" className="text-gray-700 hover:text-green-600">Farming Types</Link>
+            
             <Link to="/faq" className="text-gray-700 hover:text-green-600">FAQ</Link>
           </div>
         </div>

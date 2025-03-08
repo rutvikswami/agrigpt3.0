@@ -26,48 +26,50 @@ export function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <FeatureCard
             icon={<Plant className="w-8 h-8" />}
-            title="Crop Management"
-            description="Get personalized recommendations for crop selection and management based on your local conditions."
-            externalLink="https://www.fao.org/agriculture/crops/en/"
-            externalLinkText="FAO Crop Resources"
+            title="Sustainable Crop Management"
+            description="Implement sustainable practices to enhance crop productivity while preserving natural resources."
+            externalLink="https://www.fao.org/sustainability/en/"
+            externalLinkText="Learn more about Sustainable Crop Management"
           />
           <FeatureCard
             icon={<Droplets className="w-8 h-8" />}
-            title="Irrigation Planning"
-            description="Optimize your water usage with smart irrigation scheduling and monitoring."
-            externalLink="https://www.nrcs.usda.gov/programs-initiatives/eqip-environmental-quality-incentives/eqip-irrigation-water-management"
-            externalLinkText="USDA Irrigation Management"
+            title="Smart Irrigation Planning"
+            description="Utilize AI-driven irrigation systems to optimize water usage and improve crop yields."
+            externalLink="https://www.theguardian.com/world/2024/sep/30/high-tech-high-yields-the-kenyan-farmers-deploying-ai-to-increase-productivity"
+            externalLinkText="Discover Smart Irrigation Planning"
           />
           <FeatureCard
             icon={<Sun className="w-8 h-8" />}
-            title="Weather Insights"
-            description="Access detailed weather forecasts and climate analysis for better planning."
-            externalLink="https://www.accuweather.com/en/agriculture-weather"
-            externalLinkText="AccuWeather Agriculture"
+            title="AI-Powered Weather Insights"
+            description="Access precise weather forecasts using AI to make informed farming decisions."
+            externalLink="https://www.ft.com/content/33ed8ad0-f8ad-42ed-983a-54d5b9eb2d27"
+            externalLinkText="Explore AI-Powered Weather Insights"
           />
           <FeatureCard
             icon={<Wind className="w-8 h-8" />}
-            title="Pest Control"
-            description="Identify and manage pests effectively with AI-powered detection and treatment suggestions."
-            externalLink="https://www.epa.gov/safepestcontrol/integrated-pest-management-ipm-principles"
-            externalLinkText="EPA Pest Management"
+            title="Autonomous Pest Control"
+            description="Deploy autonomous technologies to monitor and manage pests efficiently."
+            externalLink="https://apnews.com/article/df6087837925c14cfdd7ad2f80410a54"
+            externalLinkText="Learn about Autonomous Pest Control"
           />
           <FeatureCard
             icon={<Leaf className="w-8 h-8" />}
-            title="Sustainable Practices"
-            description="Learn about eco-friendly farming methods and sustainable agriculture techniques."
+            title="Sustainable Farming Practices"
+            description="Adopt eco-friendly methods to ensure long-term agricultural sustainability."
             externalLink="https://www.fao.org/sustainability/en/"
-            externalLinkText="FAO Sustainability"
+            externalLinkText="Learn more about Sustainable Farming Practices"
           />
           <FeatureCard
             icon={<Wheat className="w-8 h-8" />}
             title="Market Intelligence"
-            description="Stay updated with market trends, prices, and demand forecasts for your crops."
+            description="Stay updated with the latest agricultural market data and trends to make informed decisions."
             externalLink="https://www.fas.usda.gov/data"
-            externalLinkText="USDA Market Data"
+            externalLinkText="Access Market Intelligence"
           />
         </div>
       </section>
+
+
 
       {/* Government Schemes Section */}
       <section className="bg-green-50 py-16">

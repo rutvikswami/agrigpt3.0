@@ -7,4 +7,13 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  server: {
+    proxy: {
+      '/ask': {
+        target: 'https://varunkumar-m-agriai-app-qefjkz.streamlit.app',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 });

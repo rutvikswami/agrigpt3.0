@@ -7,7 +7,7 @@ export function About() {
       <section className="text-center space-y-4">
         <h1 className="text-4xl font-bold text-gray-900">About AgriGPT</h1>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-          AgriGPT is an AI-powered agricultural platform designed to revolutionize farming through intelligent insights, real-time assistance, and comprehensive agricultural knowledge.
+          AgriGPT is an AI-powered agricultural platform designed to revolutionize farming through intelligent insights and real-time assistance using advanced language models.
         </p>
       </section>
 
@@ -19,7 +19,7 @@ export function About() {
           </div>
           <h3 className="text-xl font-semibold">AI-Powered Assistant</h3>
           <p className="text-gray-600">
-            Our advanced AI chatbot provides instant, accurate responses to your farming queries, powered by the latest Mistral technology.
+            Our advanced AI chatbot provides instant, accurate responses to your farming queries, powered by Google's Gemini technology.
           </p>
         </div>
         <div className="text-center space-y-4">
@@ -35,9 +35,9 @@ export function About() {
           <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
             <Users2 className="w-8 h-8 text-green-600" />
           </div>
-          <h3 className="text-xl font-semibold">Community Driven</h3>
+          <h3 className="text-xl font-semibold">Expert Knowledge</h3>
           <p className="text-gray-600">
-            Join a growing community of farmers, sharing knowledge and experiences to promote sustainable agriculture.
+            Access verified agricultural information and expert insights to make informed farming decisions.
           </p>
         </div>
       </section>
@@ -70,7 +70,7 @@ export function About() {
 
 const technologies = [
   {
-    name: "Mistral AI",
+    name: "Google Gemini",
     description: "Advanced language model for accurate and contextual responses"
   },
   {
@@ -82,7 +82,7 @@ const technologies = [
     description: "Up-to-date insights and recommendations"
   },
   {
-    name: "Cloud Infrastructure",
-    description: "Scalable and reliable service delivery"
+    name: "Smart Algorithms",
+    description: "Intelligent data processing for precise agricultural insights"
   }
 ];

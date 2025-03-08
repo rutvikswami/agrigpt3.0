@@ -53,7 +53,11 @@ const faqData = [
     questions: [
       {
         question: "What is AgriGPT?",
-        answer: "AgriGPT is an AI-powered agricultural assistant that provides farmers with real-time support, farming insights, and access to agricultural knowledge using advanced language models and voice recognition technology."
+        answer: "AgriGPT is an AI-powered agricultural assistant that provides farmers with real-time support and farming insights using Google's Gemini AI technology. It offers personalized recommendations and access to comprehensive agricultural knowledge."
+      },
+      {
+        question: "What is Smart Farming?",
+        answer: "Smart Farming is the application of modern information and communication technologies (ICT) to agriculture. It involves using technologies like AI, IoT sensors, drones, and data analytics to optimize farming operations, improve crop yields, reduce resource waste, and make more informed decisions. This includes automated irrigation systems, precision agriculture, real-time monitoring of crop health, and predictive analytics for weather and market conditions."
       },
       {
         question: "Is AgriGPT available in multiple languages?",
@@ -61,7 +65,7 @@ const faqData = [
       },
       {
         question: "How accurate is the AI assistant?",
-        answer: "AgriGPT uses advanced Mistral AI technology and is trained on verified agricultural data. While highly accurate, we recommend using it as a supplementary tool alongside traditional farming knowledge and expert advice."
+        answer: "AgriGPT uses Google's advanced Gemini AI technology and is trained on verified agricultural data. While highly accurate, we recommend using it as a supplementary tool alongside traditional farming knowledge and expert advice."
       }
     ]
   },
