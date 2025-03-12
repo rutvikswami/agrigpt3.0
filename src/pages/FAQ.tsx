@@ -3,13 +3,13 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 
 export function FAQ() {
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <h1 className="text-4xl font-bold text-center mb-12">Frequently Asked Questions</h1>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-6 sm:mb-8">Frequently Asked Questions</h1>
       
       <div className="space-y-4">
         {faqData.map((category, index) => (
-          <div key={index} className="space-y-4">
-            <h2 className="text-2xl font-semibold text-green-700 mt-8 mb-4">
+          <div key={index} className="space-y-3 sm:space-y-4">
+            <h2 className="text-lg sm:text-xl font-semibold text-green-700 mt-4 sm:mt-6 mb-2 sm:mb-3">
               {category.category}
             </h2>
             {category.questions.map((faq, faqIndex) => (
@@ -28,19 +28,19 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
   return (
     <div className="border rounded-lg">
       <button
-        className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50"
+        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-left flex justify-between items-center hover:bg-gray-50"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="font-medium text-gray-900">{question}</span>
+        <span className="font-medium text-gray-900 text-sm sm:text-base pr-2">{question}</span>
         {isOpen ? (
-          <ChevronUp className="w-5 h-5 text-gray-500" />
+          <ChevronUp className="w-4 h-4 text-gray-500 flex-shrink-0" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-gray-500" />
+          <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />
         )}
       </button>
       {isOpen && (
-        <div className="px-6 py-4 border-t">
-          <p className="text-gray-600">{answer}</p>
+        <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-t">
+          <p className="text-gray-600 text-sm sm:text-base">{answer}</p>
         </div>
       )}
     </div>

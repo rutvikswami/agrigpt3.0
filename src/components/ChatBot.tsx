@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { MessageCircle, Mic, Send, Volume2, StopCircle } from "lucide-react";
 import { franc } from "franc-min";
+import { cn } from "../lib/utils";
 
 interface Message {
   sender: "user" | "bot";
@@ -14,12 +15,19 @@ export function ChatBot() {
   ]);
   const [input, setInput] = useState<string>("");
   const [isListening, setIsListening] = useState<boolean>(false);
-  const [speechSynthesisActive, setSpeechSynthesisActive] = useState<boolean>(false);
+  const [activeVoiceIndex, setActiveVoiceIndex] = useState<number | null>(null);  // Track active voice button
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const chatContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // Modified scrollToBottom function
+  const scrollToBottom = (toTop = false) => {
+    if (toTop) {
+      messagesEndRef.current?.parentElement?.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   useEffect(() => {
@@ -29,39 +37,35 @@ export function ChatBot() {
   const stopOutput = () => {
     if (speechSynthesis.speaking) {
       speechSynthesis.cancel();
-      setSpeechSynthesisActive(false);
+      setActiveVoiceIndex(null);  // Reset active button
     }
   };
 
-  // Detect language with improved support for Kannada
   const detectLanguage = (text: string) => {
     const langCode = franc(text);
     switch (langCode) {
       case "hin":
-        return "hi-IN";  // Hindi
+        return "hi-IN";
       case "kan":
-        return "kn-IN";  // Kannada
+        return "kn-IN";
       case "tam":
-        return "ta-IN";  // Tamil
+        return "ta-IN";
       case "tel":
-        return "te-IN";  // Telugu
+        return "te-IN";
       default:
-        return "en-US";   // Default to English
+        return "en-US";
     }
   };
 
-  // Enhanced voice input handling for Kannada
   const handleVoiceInput = () => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert("Voice recognition is not supported in this browser.");
       return;
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = "kn-IN";  // Force Kannada for testing
+    recognition.lang = "";
     recognition.interimResults = false;
 
     setIsListening(true);
@@ -72,33 +76,34 @@ export function ChatBot() {
       setInput(transcript);
     };
 
-    recognition.onerror = (error) => {
-      console.error("Recognition error:", error);
-      setIsListening(false);
-    };
+    recognition.onerror = () => setIsListening(false);
     recognition.onend = () => setIsListening(false);
   };
 
-  // Enhanced speech synthesis for Kannada
-  const speakText = (text: string) => {
+  const speakText = (text: string, index: number) => {
     if (speechSynthesis.speaking) speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = detectLanguage(text);  // Set language based on text
+    utterance.lang = detectLanguage(text);
     utterance.voice = speechSynthesis.getVoices().find(voice => voice.lang === "kn-IN") || null;
 
-    if (!utterance.voice) {
-      console.warn("Kannada voice not found, using default.");
-    }
+    setActiveVoiceIndex(index);
+
+    // Scroll to the starting of the message whose voice output is generated
+    const messageElement = document.getElementById(`message-${index}`);
+    messageElement?.scrollIntoView({ behavior: "smooth", block: "start" });
 
     speechSynthesis.speak(utterance);
-    setSpeechSynthesisActive(true);
-
-    utterance.onend = () => setSpeechSynthesisActive(false);
+    utterance.onend = () => setActiveVoiceIndex(null);
   };
 
-  const handleVoiceOutput = (text: string) => {
-    speakText(text);
+
+  const handleVoiceOutput = (text: string, index: number) => {
+    if (activeVoiceIndex === index) {
+      stopOutput();  // Stop if same button is clicked
+    } else {
+      speakText(text, index);  // Speak if different button is clicked
+    }
   };
 
   const sendMessage = async () => {
@@ -115,98 +120,84 @@ export function ChatBot() {
         body: JSON.stringify({ question: input }),
       });
 
-      if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
-
       const data = await response.json();
       const answer = data?.answer?.trim() || "Sorry, I couldn't find an answer.";
-      const botMessage: Message = { sender: "bot", text: answer };
-
-      setMessages((prev) => [...prev, botMessage]);
-    } catch (error) {
-      const botMessage: Message = {
-        sender: "bot",
-        text: "Error connecting to the AI server.",
-      };
-      setMessages((prev) => [...prev, botMessage]);
+      setMessages((prev) => [...prev, { sender: "bot", text: answer }]);
+    } catch {
+      setMessages((prev) => [...prev, { sender: "bot", text: "Error connecting to the AI server." }]);
     }
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed bottom-0 right-0 z-50 p-4 sm:p-6 md:bottom-4 md:right-4">
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-green-600 hover:bg-green-700 text-white rounded-full p-4 shadow-lg transition-all"
+          className="bg-green-600 hover:bg-green-700 text-white rounded-full p-3 shadow-lg transition-all duration-200 flex items-center gap-2"
         >
-          <MessageCircle className="w-6 h-6" />
+          <MessageCircle className="w-5 h-5" />
+          <span className="hidden sm:inline text-sm font-medium">Chat with AgriGPT</span>
         </button>
       )}
 
       {isOpen && (
-        <div className="bg-white rounded-lg shadow-xl w-[380px] h-[500px] flex flex-col">
-          <div className="p-4 bg-green-600 text-white rounded-t-lg flex justify-between items-center">
-            <h3 className="font-semibold">AgriGPT Assistant</h3>
-            <button
-              onClick={() => {
-                setIsOpen(false);
-                stopOutput();
-              }}
-              className="hover:bg-green-700 rounded-full p-1"
-            >
-              ✕
-            </button>
-          </div>
-
-          <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto">
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"} mb-2 items-end`}
-              >
-                <div className="relative max-w-[80%]">
-                  <div
-                    className={`p-3 rounded-lg ${
-                      msg.sender === "user"
-                        ? "bg-green-500 text-white"
-                        : "bg-blue-200 text-black"
-                    }`}
-                  >
-                    {msg.text}
-                  </div>
-                  {msg.sender === "bot" && (
-                    <button
-                      className="absolute bottom-0 right-[-30px] text-green-600 hover:text-green-800"
-                      onClick={() => handleVoiceOutput(msg.text)}
-                    >
-                      <Volume2 className="w-5 h-5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <div className="p-4 border-t flex items-center gap-2">
-            <button onClick={handleVoiceInput} className="p-2 hover:bg-gray-100 rounded-full">
-              <Mic className={`w-5 h-5 text-green-600 ${isListening ? "animate-pulse" : ""}`} />
-            </button>
-            <input
-              type="text"
-              placeholder="Type your message..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              className="flex-1 border rounded-full px-4 py-2 focus:outline-none"
-            />
-            <button onClick={sendMessage} className="p-2 hover:bg-gray-100 rounded-full">
-              <Send className="w-5 h-5 text-green-600" />
-            </button>
-            {speechSynthesisActive && (
-              <button onClick={stopOutput} className="p-2 hover:bg-gray-100 rounded-full">
-                <StopCircle className="w-5 h-5 text-red-600" />
+        <div className="fixed inset-0 sm:relative">
+          <div className="absolute inset-0 bg-black/20 sm:hidden" onClick={() => setIsOpen(false)} />
+          <div className="absolute bottom-0 right-0 left-0 sm:relative bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full sm:w-[380px] h-[80vh] sm:h-[600px] flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 bg-green-600 text-white rounded-t-2xl">
+              <h3 className="font-semibold text-sm">AgriGPT Assistant</h3>
+              <button onClick={() => setIsOpen(false)} className="hover:bg-green-700 rounded-full p-1 transition-colors">
+                ✕
               </button>
-            )}
+            </div>
+
+            <div className="flex-1 p-4 overflow-y-auto">
+              {messages.map((msg, index) => (
+                <div key={index} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"} mb-2`}>
+                  <div className="relative max-w-[80%]">
+                    <div className={`p-2 rounded-lg ${msg.sender === "user" ? "bg-green-500 text-white" : "bg-gray-100 text-gray-800"}`}>
+                      {msg.text}
+                    </div>
+                    {msg.sender === "bot" && (
+                      <button
+                        className="absolute bottom-0 right-[-30px]"
+                        onClick={() => handleVoiceOutput(msg.text, index)}
+                      >
+                        {activeVoiceIndex === index ? (
+                          <StopCircle className="w-5 h-5 text-red-600" />
+                        ) : (
+                          <Volume2 className="w-5 h-5 text-green-600" />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <div className="p-4 border-t flex items-center gap-2">
+              <button
+                onClick={handleVoiceInput}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="Voice input"
+              >
+                <Mic className={`w-5 h-5 text-green-600 ${isListening ? "animate-pulse" : ""}`} />
+              </button>
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  placeholder="Type your message..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                  className="w-full px-4 py-2 text-sm border rounded-full focus:outline-none focus:ring-2 focus:ring-green-600 pr-10"
+                />
+                <button onClick={sendMessage} className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+                  <Send className="w-4 h-4 text-green-600" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
