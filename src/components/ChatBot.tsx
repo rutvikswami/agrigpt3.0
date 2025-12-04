@@ -1,18 +1,38 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MessageCircle, Mic, Send, Volume2, StopCircle, X } from "lucide-react";
-import { franc } from "franc-min";
+import {
+  MessageCircle,
+  Mic,
+  Send,
+  Volume2,
+  StopCircle,
+  X,
+  Globe,
+  ChevronDown,
+} from "lucide-react";
 
 interface Message {
   sender: "user" | "bot";
   text: string;
 }
 
+const LANGUAGES = [
+  { code: "en-US", name: "English", label: "English" },
+  { code: "hi-IN", name: "Hindi", label: "हिंदी" },
+  { code: "kn-IN", name: "Kannada", label: "ಕನ್ನಡ" },
+  { code: "ta-IN", name: "Tamil", label: "தமிழ்" },
+  { code: "te-IN", name: "Telugu", label: "తెలుగు" },
+  { code: "mr-IN", name: "Marathi", label: "मराठी" },
+  { code: "gu-IN", name: "Gujarati", label: "ગુજરાતી" },
+  { code: "bn-IN", name: "Bengali", label: "বাংলা" },
+  { code: "ml-IN", name: "Malayalam", label: "മലയാളം" },
+];
+
 export function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: "bot",
-      text: "🌿 Hello! I'm AgriGPT, your personal farming assistant. I can chat casually or answer any questions about agriculture, farming, weather, crops, soil, irrigation, fertilizers, pests, livestock, government schemes, or even about this platform. How can I help you today?",
+      text: "🌿 Hello! I'm AgriGPT. I can speak multiple languages. Select your language and ask me about farming, crops, or schemes!",
     },
   ]);
 
@@ -20,6 +40,9 @@ export function ChatBot() {
   const [isListening, setIsListening] = useState(false);
   const [activeVoiceIndex, setActiveVoiceIndex] = useState<number | null>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [selectedLang, setSelectedLang] = useState(LANGUAGES[0]); // Default English
+  const [showLangMenu, setShowLangMenu] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const scrollToBottom = () =>
@@ -29,21 +52,30 @@ export function ChatBot() {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  // Detect language for TTS
-  const detectLanguage = (text: string) => {
-    const langCode = franc(text);
-    switch (langCode) {
-      case "hin":
-        return "hi-IN";
-      case "kan":
-        return "kn-IN";
-      case "tam":
-        return "ta-IN";
-      case "tel":
-        return "te-IN";
-      default:
-        return "en-US";
+  // Helper: Simple regex-based script detection to replace 'franc'
+  const detectScriptLang = (text: string) => {
+    if (/[\u0900-\u097F]/.test(text)) return "hi-IN"; // Devanagari (Hindi/Marathi)
+    if (/[\u0980-\u09FF]/.test(text)) return "bn-IN"; // Bengali
+    if (/[\u0A80-\u0AFF]/.test(text)) return "gu-IN"; // Gujarati
+    if (/[\u0B80-\u0BFF]/.test(text)) return "ta-IN"; // Tamil
+    if (/[\u0C00-\u0C7F]/.test(text)) return "te-IN"; // Telugu
+    if (/[\u0C80-\u0CFF]/.test(text)) return "kn-IN"; // Kannada
+    if (/[\u0D00-\u0D7F]/.test(text)) return "ml-IN"; // Malayalam
+    return null;
+  };
+
+  // Detect language code for TTS
+  const getTTSLang = (text: string) => {
+    // 1. Try to detect script
+    const detected = detectScriptLang(text);
+
+    // 2. Special handling for Marathi vs Hindi (both share Devanagari)
+    if (detected === "hi-IN" && selectedLang.code === "mr-IN") {
+      return "mr-IN";
     }
+
+    // 3. If detected, return it. Otherwise fallback to UI selection or English
+    return detected || selectedLang.code || "en-US";
   };
 
   // -------------------------
@@ -61,21 +93,19 @@ export function ChatBot() {
 
     const recognition = new SpeechRecognition();
 
-    // IMPORTANT: interimResults = true allows the user to see text AS they speak
     recognition.interimResults = true;
     recognition.continuous = false;
-    recognition.lang = "en-US"; // Default to English, can be made dynamic
+
+    // CRITICAL: Set the language to what the user selected
+    recognition.lang = selectedLang.code;
 
     setIsListening(true);
     recognition.start();
 
     recognition.onresult = (event: any) => {
-      // Create a single string from the results so far
       const transcript = Array.from(event.results)
         .map((result: any) => result[0].transcript)
         .join("");
-
-      // Update input state in real-time
       setInput(transcript);
     };
 
@@ -94,22 +124,34 @@ export function ChatBot() {
     if (speechSynthesis.speaking) speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = detectLanguage(text);
-    // Attempt to find a matching voice for the detected language
-    utterance.voice =
-      speechSynthesis.getVoices().find((v) => v.lang === utterance.lang) ||
-      null;
+
+    // Determine language: strictly try to match the text content
+    const langCode = getTTSLang(text);
+    utterance.lang = langCode;
+
+    // Try to get a native voice for that language
+    const voices = speechSynthesis.getVoices();
+    // Priority: Exact match -> Parent language match (e.g., hi-IN matches hi)
+    const preferredVoice =
+      voices.find((v) => v.lang === langCode) ||
+      voices.find((v) => v.lang.startsWith(langCode.split("-")[0]));
+
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
 
     setActiveVoiceIndex(index);
 
+    // Scroll to message being read
     document.getElementById(`message-${index}`)?.scrollIntoView({
       behavior: "smooth",
+      block: "center",
     });
-
-    speechSynthesis.speak(utterance);
 
     utterance.onend = () => setActiveVoiceIndex(null);
     utterance.onerror = () => setActiveVoiceIndex(null);
+
+    speechSynthesis.speak(utterance);
   };
 
   const handleVoiceOutput = (text: string, index: number) => {
@@ -135,10 +177,11 @@ export function ChatBot() {
     setIsTyping(true);
 
     try {
+      // NOTE: Ensure you have your API key in .env as VITE_GEMINI_API_KEY
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
+
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${
-          import.meta.env.VITE_GEMINI_API_KEY
-        }`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -151,23 +194,25 @@ export function ChatBot() {
                     text: `
 You are AgriGPT, a professional agriculture AI assistant.
 
-You may answer questions about:
+Your specific language instructions:
+1. DETECT the language of the user's input ("${query}").
+2. REPLY IN THE EXACT SAME LANGUAGE as the user's input. 
+3. If the user input is a mix of languages (e.g., Hinglish), reply in the same style or standard Hindi/English as appropriate for clarity.
+
+Domain Knowledge:
 ✔ Crops, soil, fertilizers, pests, irrigation 
 ✔ Livestock, weather, organic farming 
 ✔ Farming economics, market trends 
 ✔ Government schemes 
-✔ Information about this platform (AgriGPT, features, voice support, analytics, multilingual system, mission, etc.)
+✔ Information about this platform
 
-❌ Politely refuse questions unrelated to agriculture or the platform.
-
-Use friendly, helpful language.
-
-Conversation history:
+Context History:
 ${messages
-  .map((m) => `${m.sender === "user" ? "User" : "Bot"}: ${m.text}`)
+  .slice(-5)
+  .map((m) => `${m.sender}: ${m.text}`)
   .join("\n")}
 
-User input: ${query}
+User Question: ${query}
                     `,
                   },
                 ],
@@ -181,7 +226,7 @@ User input: ${query}
 
       const answer =
         data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
-        "🌱 Sorry, I couldn’t find an answer. Please ask something related to agriculture.";
+        "🌱 I apologize, but I am currently unable to process that request.";
 
       setMessages((prev) => [...prev, { sender: "bot", text: answer }]);
     } catch (err) {
@@ -190,7 +235,7 @@ User input: ${query}
         ...prev,
         {
           sender: "bot",
-          text: "⚠ Sorry! I’m having trouble connecting to the AI service. Please try again later.",
+          text: "⚠ Network Error. Please check your connection.",
         },
       ]);
     } finally {
@@ -207,9 +252,7 @@ User input: ${query}
           className="bg-green-600 hover:bg-green-700 text-white rounded-full p-3 shadow-lg flex items-center gap-2 transition-transform hover:scale-105"
         >
           <MessageCircle className="w-6 h-6" />
-          <span className="hidden sm:inline text-sm font-medium">
-            Chat with AgriGPT
-          </span>
+          <span className="hidden sm:inline text-sm font-medium">AgriGPT</span>
         </button>
       )}
 
@@ -224,21 +267,56 @@ User input: ${query}
 
           <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:w-[380px] h-[85vh] sm:h-[600px] flex flex-col relative z-10 animate-in slide-in-from-bottom-5 duration-300">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-green-600 text-white rounded-t-2xl shadow-md">
-              <div className="flex items-center gap-2">
-                <div className="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
-                  <MessageCircle className="w-4 h-4" />
+            <div className="flex flex-col bg-green-600 text-white rounded-t-2xl shadow-md">
+              <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <div className="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
+                    <MessageCircle className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-semibold text-sm tracking-wide">
+                    AgriGPT
+                  </h3>
                 </div>
-                <h3 className="font-semibold text-sm tracking-wide">
-                  AgriGPT Assistant
-                </h3>
+                <div className="flex items-center gap-2">
+                  {/* Language Selector Toggle */}
+                  <button
+                    onClick={() => setShowLangMenu(!showLangMenu)}
+                    className="flex items-center gap-1 bg-green-700/50 hover:bg-green-700 px-2 py-1 rounded text-xs transition-colors"
+                  >
+                    <Globe className="w-3 h-3" />
+                    <span>{selectedLang.label}</span>
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    className="hover:bg-green-700/50 rounded-full p-1 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="hover:bg-green-700/50 rounded-full p-1 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
+
+              {/* Language Menu Dropdown */}
+              {showLangMenu && (
+                <div className="px-4 pb-3 grid grid-cols-3 gap-2 animate-in fade-in slide-in-from-top-2">
+                  {LANGUAGES.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => {
+                        setSelectedLang(lang);
+                        setShowLangMenu(false);
+                      }}
+                      className={`text-xs py-1.5 rounded border text-center transition-colors ${
+                        selectedLang.code === lang.code
+                          ? "bg-white text-green-700 border-white font-bold"
+                          : "border-green-500/30 text-green-100 hover:bg-green-700"
+                      }`}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Messages Area */}
@@ -313,7 +391,7 @@ User input: ${query}
                       ? "bg-red-50 text-red-500"
                       : "hover:bg-gray-100 text-gray-500"
                   }`}
-                  title="Speak"
+                  title={isListening ? "Listening..." : "Tap to speak"}
                 >
                   {isListening && (
                     <span className="absolute inset-0 rounded-full bg-red-400 opacity-20 animate-ping" />
@@ -329,7 +407,11 @@ User input: ${query}
 
                 <input
                   type="text"
-                  placeholder={isListening ? "Listening..." : "Ask AgriGPT..."}
+                  placeholder={
+                    isListening
+                      ? `Listening (${selectedLang.name})...`
+                      : "Ask anything..."
+                  }
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && sendMessage()}
@@ -349,7 +431,10 @@ User input: ${query}
                 </button>
               </div>
 
-              <div className="text-center mt-2">
+              <div className="flex justify-between items-center mt-2 px-1">
+                <span className="text-[10px] text-gray-400 font-medium">
+                  {selectedLang.name} Input Active
+                </span>
                 <span className="text-[10px] text-gray-400 font-medium">
                   Powered by Gemini AI
                 </span>
