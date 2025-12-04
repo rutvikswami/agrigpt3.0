@@ -25,14 +25,15 @@ const LANGUAGES = [
   { code: "gu-IN", name: "Gujarati", label: "ગુજરાતી" },
   { code: "bn-IN", name: "Bengali", label: "বাংলা" },
   { code: "ml-IN", name: "Malayalam", label: "മലയാളം" },
+  { code: "pa-IN", name: "Punjabi", label: "ਪੰਜਾਬੀ" },
 ];
 
-export function ChatBot() {
+export default function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: "bot",
-      text: "🌿 Hello! I'm AgriGPT. I can speak multiple languages. Select your language and ask me about farming, crops, or schemes!",
+      text: "🌿 Hello! I'm AgriGPT. I can speak multiple languages. Select your language from the top menu and ask me anything about farming!",
     },
   ]);
 
@@ -97,6 +98,7 @@ export function ChatBot() {
     recognition.continuous = false;
 
     // CRITICAL: Set the language to what the user selected
+    // This tells the browser to listen for this specific language
     recognition.lang = selectedLang.code;
 
     setIsListening(true);
@@ -194,10 +196,18 @@ export function ChatBot() {
                     text: `
 You are AgriGPT, a professional agriculture AI assistant.
 
-Your specific language instructions:
-1. DETECT the language of the user's input ("${query}").
-2. REPLY IN THE EXACT SAME LANGUAGE as the user's input. 
-3. If the user input is a mix of languages (e.g., Hinglish), reply in the same style or standard Hindi/English as appropriate for clarity.
+USER CONTEXT:
+- Selected Input Language: ${selectedLang.name} (${selectedLang.code})
+- User Query: "${query}"
+
+INSTRUCTIONS:
+1. Respond in the language "${
+                      selectedLang.name
+                    }" unless the user explicitly asks for English.
+2. If the user query is in a mix of languages (e.g., Hinglish), reply in the same mixed style or pure ${
+                      selectedLang.name
+                    } for clarity.
+3. Keep answers concise, helpful, and friendly.
 
 Domain Knowledge:
 ✔ Crops, soil, fertilizers, pests, irrigation 
@@ -211,8 +221,6 @@ ${messages
   .slice(-5)
   .map((m) => `${m.sender}: ${m.text}`)
   .join("\n")}
-
-User Question: ${query}
                     `,
                   },
                 ],
@@ -267,7 +275,7 @@ User Question: ${query}
 
           <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:w-[380px] h-[85vh] sm:h-[600px] flex flex-col relative z-10 animate-in slide-in-from-bottom-5 duration-300">
             {/* Header */}
-            <div className="flex flex-col bg-green-600 text-white rounded-t-2xl shadow-md">
+            <div className="flex flex-col bg-green-600 text-white rounded-t-2xl shadow-md transition-all duration-300">
               <div className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-2">
                   <div className="bg-white/20 p-1.5 rounded-lg backdrop-blur-sm">
@@ -281,11 +289,16 @@ User Question: ${query}
                   {/* Language Selector Toggle */}
                   <button
                     onClick={() => setShowLangMenu(!showLangMenu)}
-                    className="flex items-center gap-1 bg-green-700/50 hover:bg-green-700 px-2 py-1 rounded text-xs transition-colors"
+                    className="flex items-center gap-1 bg-green-700/50 hover:bg-green-700 px-2 py-1 rounded text-xs transition-colors border border-green-500/30"
+                    title="Change Language"
                   >
                     <Globe className="w-3 h-3" />
                     <span>{selectedLang.label}</span>
-                    <ChevronDown className="w-3 h-3" />
+                    <ChevronDown
+                      className={`w-3 h-3 transition-transform ${
+                        showLangMenu ? "rotate-180" : ""
+                      }`}
+                    />
                   </button>
                   <button
                     onClick={() => setIsOpen(false)}
@@ -306,10 +319,10 @@ User Question: ${query}
                         setSelectedLang(lang);
                         setShowLangMenu(false);
                       }}
-                      className={`text-xs py-1.5 rounded border text-center transition-colors ${
+                      className={`text-[11px] py-1.5 rounded border text-center transition-all ${
                         selectedLang.code === lang.code
-                          ? "bg-white text-green-700 border-white font-bold"
-                          : "border-green-500/30 text-green-100 hover:bg-green-700"
+                          ? "bg-white text-green-700 border-white font-bold shadow-sm"
+                          : "border-green-500/30 text-green-100 hover:bg-green-700 hover:border-green-400"
                       }`}
                     >
                       {lang.label}
@@ -391,7 +404,11 @@ User Question: ${query}
                       ? "bg-red-50 text-red-500"
                       : "hover:bg-gray-100 text-gray-500"
                   }`}
-                  title={isListening ? "Listening..." : "Tap to speak"}
+                  title={
+                    isListening
+                      ? `Listening in ${selectedLang.name}...`
+                      : `Tap to speak in ${selectedLang.name}`
+                  }
                 >
                   {isListening && (
                     <span className="absolute inset-0 rounded-full bg-red-400 opacity-20 animate-ping" />
@@ -432,8 +449,9 @@ User Question: ${query}
               </div>
 
               <div className="flex justify-between items-center mt-2 px-1">
-                <span className="text-[10px] text-gray-400 font-medium">
-                  {selectedLang.name} Input Active
+                <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
+                  <Globe className="w-3 h-3" />
+                  {selectedLang.name} Mode Active
                 </span>
                 <span className="text-[10px] text-gray-400 font-medium">
                   Powered by Gemini AI
