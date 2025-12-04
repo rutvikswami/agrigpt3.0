@@ -28,12 +28,12 @@ const LANGUAGES = [
   { code: "pa-IN", name: "Punjabi", label: "ਪੰਜਾਬੀ" },
 ];
 
-export default function App() {
+export function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: "bot",
-      text: "🌿 Hello! I'm AgriGPT. I can speak multiple languages. Select your language from the top menu and ask me anything about farming!",
+      text: "🌿 Hello! I'm AgriGPT, your multilingual farming assistant. \n\n✨ Features:\n🗣️ Voice input in 10+ Indian languages\n🔊 Text-to-speech responses\n🌍 Language selector in header\n\nSelect your preferred language from the globe icon above and start chatting - you can type OR speak your questions!",
     },
   ]);
 
@@ -88,21 +88,30 @@ export default function App() {
       (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      alert("Voice recognition not supported in this browser.");
+      alert("Voice recognition not supported in this browser. Please use Chrome, Edge, or Safari.");
       return;
     }
 
     const recognition = new SpeechRecognition();
 
+    // Enhanced settings for better multi-language support
     recognition.interimResults = true;
     recognition.continuous = false;
+    recognition.maxAlternatives = 3;
 
     // CRITICAL: Set the language to what the user selected
     // This tells the browser to listen for this specific language
     recognition.lang = selectedLang.code;
 
     setIsListening(true);
-    recognition.start();
+    
+    try {
+      recognition.start();
+    } catch (error) {
+      console.error("Failed to start speech recognition:", error);
+      setIsListening(false);
+      return;
+    }
 
     recognition.onresult = (event: any) => {
       const transcript = Array.from(event.results)
@@ -111,11 +120,38 @@ export default function App() {
       setInput(transcript);
     };
 
-    recognition.onend = () => setIsListening(false);
+    recognition.onend = () => {
+      setIsListening(false);
+    };
 
     recognition.onerror = (event: any) => {
       console.error("Speech recognition error", event.error);
       setIsListening(false);
+      
+      // Provide user-friendly error messages
+      let errorMessage = "Voice recognition failed. ";
+      switch (event.error) {
+        case 'no-speech':
+          errorMessage += `No speech detected. Please try speaking in ${selectedLang.name}.`;
+          break;
+        case 'language-not-supported':
+          errorMessage += `${selectedLang.name} might not be supported. Try English or another language.`;
+          break;
+        case 'network':
+          errorMessage += "Network error. Please check your internet connection.";
+          break;
+        default:
+          errorMessage += "Please try again or type your message.";
+      }
+      
+      // Show error as a temporary message
+      const errorMsg: Message = { sender: "bot", text: `⚠️ ${errorMessage}` };
+      setMessages((prev) => [...prev, errorMsg]);
+      
+      // Remove error message after 5 seconds
+      setTimeout(() => {
+        setMessages((prev) => prev.filter(msg => msg.text !== errorMsg.text));
+      }, 5000);
     };
   };
 
@@ -256,6 +292,7 @@ ${messages
       {/* Floating Open Button */}
       {!isOpen && (
         <button
+          data-chatbot-trigger
           onClick={() => setIsOpen(true)}
           className="bg-green-600 hover:bg-green-700 text-white rounded-full p-3 shadow-lg flex items-center gap-2 transition-transform hover:scale-105"
         >
@@ -464,3 +501,5 @@ ${messages
     </div>
   );
 }
+
+export default ChatBot;
