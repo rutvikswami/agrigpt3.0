@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, ArrowRight, Home, Sprout, DollarSign, Users } from 'lucide-react';
+import { ArrowRight, Home, Sprout, DollarSign, Users } from 'lucide-react';
 import { farmingTypesData } from '../data/farmingTypes';
 
 export function FarmingTypeDetail() {

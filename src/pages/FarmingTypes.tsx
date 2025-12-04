@@ -2,8 +2,10 @@ import { Link } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { useState } from 'react';
 import { farmingTypesData } from '../data/farmingTypes';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export function FarmingTypes() {
+  const { language } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredTypes = farmingTypesData.filter(type =>
@@ -14,9 +16,14 @@ export function FarmingTypes() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       <div className="text-center mb-8 sm:mb-12">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3">Types of Farming</h1>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+          {language === 'hi' ? 'खेती के प्रकार' : 'Types of Farming'}
+        </h1>
         <p className="text-base sm:text-lg text-gray-600 max-w-3xl mx-auto">
-          Explore different farming methods and find the perfect approach for your agricultural needs
+          {language === 'hi' 
+            ? 'विभिन्न खेती के तरीकों को देखें और अपनी कृषि आवश्यकताओं के लिए सही तरीका खोजें'
+            : 'Explore different farming methods and find the perfect approach for your agricultural needs'
+          }
         </p>
         
         {/* Search Bar */}
@@ -25,7 +32,7 @@ export function FarmingTypes() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <input
               type="text"
-              placeholder="Search farming types..."
+              placeholder={language === 'hi' ? 'खेती के प्रकार खोजें...' : 'Search farming types...'}
               className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -65,12 +72,34 @@ export function FarmingTypes() {
                 </div>
 
                 <div className="mt-3 text-green-600 text-sm font-medium group-hover:text-green-700">
-                  Learn more →
+                  {language === 'hi' ? 'और जानें →' : 'Learn more →'}
                 </div>
               </div>
             </div>
           </Link>
         ))}
+      </div>
+
+      {/* Help Section */}
+      <div className="bg-blue-50 rounded-lg p-6 mt-12 text-center">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          {language === 'hi' ? 'कौन सी खेती आपके लिए सही है?' : 'Which Farming Method is Right for You?'}
+        </h2>
+        <p className="text-gray-700 mb-6">
+          {language === 'hi'
+            ? 'अगर आप confused हैं कि कौन सी खेती करें, तो AgriGPT AI से पूछें। यह आपकी जमीन, पानी, और budget के हिसाब से सलाह देगा।'
+            : 'If you are confused about which farming method to choose, ask AgriGPT AI. It will advise based on your land, water, and budget.'
+          }
+        </p>
+        <button 
+          onClick={() => {
+            const chatButton = document.querySelector('[data-chatbot-trigger]') as HTMLButtonElement;
+            chatButton?.click();
+          }}
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+        >
+          {language === 'hi' ? 'AI से सलाह लें' : 'Get AI Advice'}
+        </button>
       </div>
     </div>
   );
